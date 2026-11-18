@@ -1,0 +1,573 @@
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import User from "../models/User.js";
+import Slider from "../models/Slider.js";
+import Product from "../models/Product.js";
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const cloudinaryMapPath = path.resolve(__dirname, "../cloudinary_map.json");
+let cloudinaryMap = {};
+if (fs.existsSync(cloudinaryMapPath)) {
+  cloudinaryMap = JSON.parse(fs.readFileSync(cloudinaryMapPath, "utf8"));
+}
+
+const productImagesMap = {
+  "lifescience-milk-booster": cloudinaryMap["product_VetCare Milk Booster Supplement.png"],
+  "lifescience-calci-gel": cloudinaryMap["product_VetCare Calcium Gel Product Jar.png"],
+  "lifescience-calci-fort": cloudinaryMap["product_VetCare Calcium Supplement Bottle.png"],
+  "lifescience-cattle-supplement": cloudinaryMap["product_VetCare Cattle Supplement Bottle.png"],
+  "lifescience-ener-boost": cloudinaryMap["product_VetCare Energy Booster Bottle.png"],
+  "lifescience-hydro-lyte": cloudinaryMap["product_VetCare Electrolyte Powder for Livestock.png"],
+  "lifescience-mineral-mix": cloudinaryMap["product_VetCare Mineral Mixture Jar.png"],
+  "lifescience-vit-ad3e": cloudinaryMap["product_VetCare Vitamin AD3E Livestock Supplement.png"],
+  "lifescience-mast-care": cloudinaryMap["product_VetCare Udder Care Cream Product Shot.png"],
+  "lifescience-hoof-shield": cloudinaryMap["product_VetCare Hoof Care Solution Set.png"],
+  "lifescience-ovi-mineral": cloudinaryMap["product_VetCare Goat & Sheep Mineral Mix.png"],
+  "lifescience-liv-pro": cloudinaryMap["product_VetCare Liver Tonic Bottle.png"],
+  "lifescience-herbal-liver": cloudinaryMap["product_VetCare Herbal Liver Support Bottle.png"],
+  "lifescience-zyme-digest": cloudinaryMap["product_VetCare Digestive Enzyme Powder Label.png"],
+  "lifescience-pro-flora": cloudinaryMap["product_VetCare Probiotic Powder Pouch.png"],
+  "lifescience-multi-vit": cloudinaryMap["product_VetCare Multispecies Vitamin Syrup Package.png"],
+  "lifescience-wound-heal": cloudinaryMap["product_VetCare Wound Care Spray Set.png"],
+  "lifescience-poultry-care": cloudinaryMap["product_VetCare Poultry Multivitamin Bottle.png"],
+  "lifescience-poultry-cal": cloudinaryMap["product_VetCare Poultry Calcium Supplement Set.png"],
+  "lifescience-broiler-liv": cloudinaryMap["product_VetCare Poultry Liver Tonic Bottle.png"],
+  "lifescience-pet-care-plus": cloudinaryMap["product_VetCare Pet Nutritional Supplement.png"],
+  "lifescience-arthro-pet": cloudinaryMap["product_VetCare Pet Joint Care Supplement.png"],
+  "lifescience-flea-off": cloudinaryMap["product_VetCare Tick & Flea Care Packaging.png"],
+  "lifescience-derma-wash": cloudinaryMap["product_VetCare Veterinary Shampoo Display.png"],
+  "lifescience-aqua-clean": cloudinaryMap["product_VetCare Aqua Health Supplement.png"],
+  "lifescience-aqua-feed": cloudinaryMap["product_VetCare Fish Nutrition Powder Set.png"],
+};
+
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/vetora_db";
+
+const initialSliders = [
+  {
+    title: "Life Science Pharmaceutical",
+    subtitle: "Building a healthier tomorrow for livestock, poultry, and companion pets across India.",
+    imageUrl: "https://res.cloudinary.com/duqwahasz/image/upload/f_auto,q_auto,w_1600/v1794643875/lifescience/sliders/slider1.png",
+    link: "/products",
+    badgeText: "CLINICAL VETERINARY SCIENCE",
+    buttonText: "Explore Products",
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    title: "High-Yield Herd Wellness & Dairy Nutrition",
+    subtitle: "Precision ionic calcium gels, lactation boosters, and mineral complexes for high-producing dairy animals.",
+    imageUrl: "https://res.cloudinary.com/duqwahasz/image/upload/f_auto,q_auto,w_1600/v1794643985/lifescience/sliders/slider2.png",
+    link: "/products?animal=Cattle",
+    badgeText: "DAIRY & LIVESTOCK",
+    buttonText: "View Dairy Range",
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    title: "Phyto-Herbal Liver & Gut Vitality Tonics",
+    subtitle: "Standardized herbal hepatoprotective tonics and micro-encapsulated gut probiotics for complete vital recovery.",
+    imageUrl: "https://res.cloudinary.com/duqwahasz/image/upload/f_auto,q_auto,w_1600/v1794643991/lifescience/sliders/slider3.png",
+    link: "/products?category=liver-digestive",
+    badgeText: "VITAL CARE & TONICS",
+    buttonText: "Discover Tonics",
+    sortOrder: 2,
+    isActive: true,
+  },
+];
+
+const catalogProducts = [
+  // 1. Cattle & Dairy Essentials
+  {
+    id: "lifescience-milk-booster",
+    name: "Life Science Milk Booster",
+    type: "Lactation Enhancer Tonic",
+    price: 649,
+    mrp: 812,
+    rating: 4.8,
+    reviews: 142,
+    tag: "Bestseller",
+    category: "cattle-dairy",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo"],
+    description: "High-potency phyto-herbal lactation stimulant that activates mammary glandular tissues for sustained peak milk output.",
+    composition: "Leptadenia Reticulata 500mg, Asparagus Racemosus 450mg, Calcium 1200mg, Phosphorus 600mg.",
+    benefits: ["Boosts daily milk yield by 15-20%", "Improves SNF and fat percentage", "Supports rapid post-calving energy recovery"],
+    dosage: "Cattle & Buffalo: 50ml twice daily; Sheep & Goat: 15ml daily.",
+    inStock: true,
+    sortOrder: 1,
+  },
+  {
+    id: "lifescience-calci-gel",
+    name: "Life Science Calci-Gel",
+    type: "Ionic Calcium Gel",
+    price: 529,
+    mrp: 660,
+    rating: 4.7,
+    reviews: 95,
+    tag: "High Energy",
+    category: "cattle-dairy",
+    formulation: "gel",
+    targetAnimals: ["Cattle", "Buffalo"],
+    description: "Rapidly absorbable ionic calcium oral gel with vital energy boosters to prevent hypocalcemia and milk fever.",
+    composition: "Available Calcium 43.5g, Phosphorus 22g, Vitamin D3 35000 IU.",
+    benefits: ["Instant absorption within 15 minutes", "Safeguards against postpartum paralysis", "Enhances uterine muscle contractions"],
+    dosage: "Administer 1 bottle 12 hours prior to calving, and repeat 1 bottle directly after calving.",
+    inStock: true,
+    sortOrder: 2,
+  },
+  {
+    id: "lifescience-calci-fort",
+    name: "Life Science Calci-Fort",
+    type: "Calcium Supplement",
+    price: 599,
+    mrp: 750,
+    rating: 4.6,
+    reviews: 98,
+    tag: "Popular",
+    category: "cattle-dairy",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo"],
+    description: "Chelated calcium suspension enriched with Vitamin D3, B12, and bio-available micro-minerals.",
+    benefits: ["Maintains peak lactation curve", "Strengthens bones and skeletal integrity"],
+    inStock: true,
+    sortOrder: 3,
+  },
+  {
+    id: "lifescience-cattle-supplement",
+    name: "Life Science Bovine-Care",
+    type: "Cattle Health Supplement",
+    price: 549,
+    mrp: 685,
+    rating: 4.6,
+    reviews: 78,
+    tag: "Everyday Care",
+    category: "cattle-dairy",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo"],
+    benefits: ["Overall vitality and immunity enhancer", "Promotes optimal ruminal digestion"],
+    inStock: true,
+    sortOrder: 4,
+  },
+  {
+    id: "lifescience-ener-boost",
+    name: "Life Science Ener-Boost",
+    type: "Livestock Energy Booster",
+    price: 499,
+    mrp: 620,
+    rating: 4.7,
+    reviews: 88,
+    tag: "Fast Action",
+    category: "cattle-dairy",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo", "Goats", "Sheep"],
+    benefits: ["Combats ketosis and negative energy balance", "Immediate glucose precursor replenishment"],
+    inStock: true,
+    sortOrder: 5,
+  },
+  {
+    id: "lifescience-hydro-lyte",
+    name: "Life Science Hydro-Lyte",
+    type: "Electrolyte Balance Powder",
+    price: 349,
+    mrp: 435,
+    rating: 4.5,
+    reviews: 64,
+    tag: "Anti-Stress",
+    category: "cattle-dairy",
+    formulation: "powder",
+    targetAnimals: ["Cattle", "Buffalo", "Poultry", "Goats"],
+    benefits: ["Prevents dehydration during severe summer heat stress", "Balances blood pH and ionic equilibrium"],
+    inStock: true,
+    sortOrder: 6,
+  },
+  {
+    id: "lifescience-mineral-mix",
+    name: "Life Science Mineral Mix",
+    type: "Chelated Mineral Mixture",
+    price: 699,
+    mrp: 875,
+    rating: 4.6,
+    reviews: 72,
+    tag: "Nutrition",
+    category: "cattle-dairy",
+    formulation: "powder",
+    targetAnimals: ["Cattle", "Buffalo"],
+    benefits: ["Overcomes silent heat and repeat breeding", "Improves reproductive conception rates"],
+    inStock: true,
+    sortOrder: 7,
+  },
+  {
+    id: "lifescience-vit-ad3e",
+    name: "Life Science Vit-AD3E",
+    type: "Vitamin AD3E Livestock Tonic",
+    price: 579,
+    mrp: 720,
+    rating: 4.8,
+    reviews: 110,
+    tag: "Top Rated",
+    category: "cattle-dairy",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo", "Poultry", "Pets"],
+    benefits: ["Essential for vision, epithelial tissue regeneration and fertility", "High potency bio-active vitamins"],
+    inStock: true,
+    sortOrder: 8,
+  },
+  {
+    id: "lifescience-mast-care",
+    name: "Life Science Mast-Care",
+    type: "Antiseptic Udder Cream",
+    price: 449,
+    mrp: 560,
+    rating: 4.7,
+    reviews: 83,
+    tag: "Protective",
+    category: "cattle-dairy",
+    formulation: "gel",
+    targetAnimals: ["Cattle", "Buffalo"],
+    benefits: ["Soothes inflamed teats and cracked udder skin", "Creates an antimicrobial barrier against pathogens"],
+    inStock: true,
+    sortOrder: 9,
+  },
+  {
+    id: "lifescience-hoof-shield",
+    name: "Life Science Hoof-Shield",
+    type: "Hoof Cleanser & Protector",
+    price: 399,
+    mrp: 499,
+    rating: 4.5,
+    reviews: 52,
+    tag: "Farm Care",
+    category: "cattle-dairy",
+    formulation: "spray",
+    targetAnimals: ["Cattle", "Buffalo", "Sheep"],
+    benefits: ["Hardens softened hoof soles and treats interdigital foot rot", "Long-lasting moisture-resistant shield"],
+    inStock: true,
+    sortOrder: 10,
+  },
+  {
+    id: "lifescience-ovi-mineral",
+    name: "Life Science Ovi-Mineral",
+    type: "Goat & Sheep Mineral Mix",
+    price: 479,
+    mrp: 599,
+    rating: 4.6,
+    reviews: 67,
+    tag: "Ruminant Care",
+    category: "cattle-dairy",
+    formulation: "powder",
+    targetAnimals: ["Goats", "Sheep"],
+    benefits: ["Specialized copper-balanced formulation for small ruminants", "Prevents wool loss and improves daily weight gain"],
+    inStock: true,
+    sortOrder: 11,
+  },
+
+  // 2. Digestion, Liver & Vital Tonics
+  {
+    id: "lifescience-liv-pro",
+    name: "Life Science Liv-Pro",
+    type: "Liver Tonic Supplement",
+    price: 499,
+    mrp: 625,
+    rating: 4.7,
+    reviews: 114,
+    tag: "Bestseller",
+    category: "liver-digestive",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Buffalo", "Poultry", "Pets"],
+    description: "Supercharged hepatic stimulant for rapid detoxification, appetite revival, and enhanced feed conversion ratio.",
+    benefits: ["Protects liver from mycotoxins and chemical contaminants", "Restores sluggish appetite within 48 hours"],
+    inStock: true,
+    sortOrder: 12,
+  },
+  {
+    id: "lifescience-herbal-liver",
+    name: "Life Science Liv-Herbal",
+    type: "Phyto-Herbal Liver Tonic",
+    price: 529,
+    mrp: 660,
+    rating: 4.8,
+    reviews: 91,
+    tag: "100% Herbal",
+    category: "liver-digestive",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Poultry", "Pets"],
+    benefits: ["100% natural formula without chemical residue", "Regenerates damaged hepatocytes"],
+    inStock: true,
+    sortOrder: 13,
+  },
+  {
+    id: "lifescience-zyme-digest",
+    name: "Life Science Zyme-Digest",
+    type: "Digestive Enzyme Powder",
+    price: 429,
+    mrp: 535,
+    rating: 4.6,
+    reviews: 74,
+    tag: "Digestive Care",
+    category: "liver-digestive",
+    formulation: "powder",
+    targetAnimals: ["Cattle", "Buffalo", "Goats"],
+    benefits: ["Resolves bloat, acute ruminal acidosis, and indigestion", "Contains active fungal diastase and cellulase"],
+    inStock: true,
+    sortOrder: 14,
+  },
+  {
+    id: "lifescience-pro-flora",
+    name: "Life Science Pro-Flora",
+    type: "Gut Health Probiotic Pouch",
+    price: 389,
+    mrp: 485,
+    rating: 4.7,
+    reviews: 69,
+    tag: "Gut Wellness",
+    category: "liver-digestive",
+    formulation: "powder",
+    targetAnimals: ["Cattle", "Buffalo", "Pets"],
+    benefits: ["Restores beneficial microflora after systemic antibiotic courses", "Stabilizes digestive tract permeability"],
+    inStock: true,
+    sortOrder: 15,
+  },
+  {
+    id: "lifescience-multi-vit",
+    name: "Life Science Multi-Vit",
+    type: "Multispecies Vitality Syrup",
+    price: 479,
+    mrp: 599,
+    rating: 4.6,
+    reviews: 85,
+    tag: "Multispecies",
+    category: "liver-digestive",
+    formulation: "tonic",
+    targetAnimals: ["Cattle", "Poultry", "Pets", "Goats", "Sheep"],
+    benefits: ["Comprehensive blend of essential vitamins, amino acids, and minerals", "Maintains strong natural resistance to diseases"],
+    inStock: true,
+    sortOrder: 16,
+  },
+  {
+    id: "lifescience-wound-heal",
+    name: "Life Science Wound-Heal",
+    type: "Antiseptic Herbal Spray",
+    price: 349,
+    mrp: 435,
+    rating: 4.8,
+    reviews: 103,
+    tag: "First Aid",
+    category: "liver-digestive",
+    formulation: "spray",
+    targetAnimals: ["Cattle", "Buffalo", "Goats", "Sheep", "Pets"],
+    benefits: ["Effective against maggots, surgical cuts, and deep wounds", "Fly repellent action prevents re-infestation"],
+    inStock: true,
+    sortOrder: 17,
+  },
+
+  // 3. Poultry, Pets & Specialized Care
+  {
+    id: "lifescience-poultry-care",
+    name: "Life Science Poultry Care",
+    type: "Poultry Multivitamin Tonic",
+    price: 399,
+    mrp: 499,
+    rating: 4.5,
+    reviews: 87,
+    tag: "Flock Wellness",
+    category: "poultry-pets",
+    formulation: "tonic",
+    targetAnimals: ["Poultry"],
+    benefits: ["Reduces flock mortality in early brooding stage", "Improves overall uniform flock growth"],
+    inStock: true,
+    sortOrder: 18,
+  },
+  {
+    id: "lifescience-poultry-cal",
+    name: "Life Science Poultry-Cal",
+    type: "Eggshell & Bone Calcium Set",
+    price: 459,
+    mrp: 570,
+    rating: 4.6,
+    reviews: 79,
+    tag: "Shell Quality",
+    category: "poultry-pets",
+    formulation: "tonic",
+    targetAnimals: ["Poultry"],
+    benefits: ["Eliminates soft-shelled and cracked eggs in layer farms", "Prevents cage layer fatigue"],
+    inStock: true,
+    sortOrder: 19,
+  },
+  {
+    id: "lifescience-broiler-liv",
+    name: "Life Science Broiler-Liv",
+    type: "Poultry Liver Tonic",
+    price: 419,
+    mrp: 520,
+    rating: 4.7,
+    reviews: 62,
+    tag: "Growth Booster",
+    category: "poultry-pets",
+    formulation: "tonic",
+    targetAnimals: ["Poultry"],
+    benefits: ["Maximizes broiler body weight gain at 35-42 days", "Optimizes feed conversion efficiency"],
+    inStock: true,
+    sortOrder: 20,
+  },
+  {
+    id: "lifescience-pet-care-plus",
+    name: "Life Science Pet Care Plus",
+    type: "Pet Nutritional Supplement",
+    price: 549,
+    mrp: 685,
+    rating: 4.6,
+    reviews: 65,
+    tag: "Pet Care",
+    category: "poultry-pets",
+    formulation: "tonic",
+    targetAnimals: ["Pets"],
+    benefits: ["Promotes shiny, lustrous coat and reduces hair fall", "Supports strong muscle and bone development"],
+    inStock: true,
+    sortOrder: 21,
+  },
+  {
+    id: "lifescience-arthro-pet",
+    name: "Life Science Arthro-Pet",
+    type: "Canine & Feline Joint Formula",
+    price: 699,
+    mrp: 875,
+    rating: 4.8,
+    reviews: 84,
+    tag: "Joint Health",
+    category: "poultry-pets",
+    formulation: "tonic",
+    targetAnimals: ["Pets"],
+    benefits: ["Glucosamine, Chondroitin and MSM for aging pets with arthritis", "Restores painless joint flexibility"],
+    inStock: true,
+    sortOrder: 22,
+  },
+  {
+    id: "lifescience-flea-off",
+    name: "Life Science Flea-Off",
+    type: "Tick & Flea Defense Spray",
+    price: 399,
+    mrp: 499,
+    rating: 4.6,
+    reviews: 93,
+    tag: "Coat Defense",
+    category: "poultry-pets",
+    formulation: "spray",
+    targetAnimals: ["Pets"],
+    benefits: ["Kills ticks, fleas, and lice on contact", "Safe plant-based natural essential oils formula"],
+    inStock: true,
+    sortOrder: 23,
+  },
+  {
+    id: "lifescience-derma-wash",
+    name: "Life Science Derma-Wash",
+    type: "Medicated Pet Shampoo",
+    price: 369,
+    mrp: 460,
+    rating: 4.5,
+    reviews: 58,
+    tag: "Skin & Coat",
+    category: "poultry-pets",
+    formulation: "shampoo",
+    targetAnimals: ["Pets"],
+    benefits: ["Antibacterial and antifungal relief for sensitive itchy skin", "Leaves fresh deodorizing scent"],
+    inStock: true,
+    sortOrder: 24,
+  },
+  {
+    id: "lifescience-aqua-clean",
+    name: "Life Science Aqua-Clean",
+    type: "Aquatic Health & Water Conditioner",
+    price: 749,
+    mrp: 935,
+    rating: 4.7,
+    reviews: 46,
+    tag: "Aquaculture",
+    category: "poultry-pets",
+    formulation: "powder",
+    targetAnimals: ["Aquaculture"],
+    benefits: ["Reduces toxic ammonia and nitrite in fish ponds", "Maintains clear, oxygen-rich aquatic environment"],
+    inStock: true,
+    sortOrder: 25,
+  },
+  {
+    id: "lifescience-aqua-feed",
+    name: "Life Science Aqua-Feed",
+    type: "Fish & Shrimp Growth Pre-Mix",
+    price: 799,
+    mrp: 999,
+    rating: 4.6,
+    reviews: 38,
+    tag: "Fisheries",
+    category: "poultry-pets",
+    formulation: "powder",
+    targetAnimals: ["Aquaculture"],
+    benefits: ["Complete amino-acid booster for rapid shrimp and finfish biomass gain", "Enhances disease survival rates"],
+    inStock: true,
+    sortOrder: 26,
+  },
+];
+
+async function seed() {
+  try {
+    await mongoose.connect(uri);
+    console.log("[Seed] Connected to MongoDB");
+
+    // 1. Seed Admin User
+    const adminEmail = "admin@gmail.com";
+    let admin = await User.findOne({ email: adminEmail });
+    if (!admin) {
+      await User.create({
+        name: "Life Science Administrator",
+        email: adminEmail,
+        password: "admin", // Hashes automatically via User pre-save hook
+        phone: "+91 98765 00000",
+        role: "admin",
+        farmName: "Life Science Pharmaceutical Head Office",
+      });
+      console.log(`[Seed] Created admin user: ${adminEmail} (password: admin)`);
+    } else {
+      admin.password = "admin";
+      admin.role = "admin";
+      await admin.save();
+      console.log(`[Seed] Updated admin user password: ${adminEmail}`);
+    }
+
+    // 2. Seed Sliders
+    for (const slider of initialSliders) {
+      await Slider.findOneAndUpdate(
+        { sortOrder: slider.sortOrder },
+        slider,
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`[Seed] Upserted ${initialSliders.length} default sliders`);
+
+    // 3. Seed Products
+    await Product.deleteMany({ id: { $regex: /^vetora-/ } });
+    for (const prod of catalogProducts) {
+      if (productImagesMap[prod.id]) {
+        prod.imageUrl = productImagesMap[prod.id];
+      }
+      await Product.findOneAndUpdate(
+        { id: prod.id },
+        prod,
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`[Seed] Upserted ${catalogProducts.length} catalog products with Cloudinary URLs`);
+
+    console.log("[Seed] Seeding completed successfully!");
+    process.exit(0);
+  } catch (err) {
+    console.error("[Seed] Error seeding database:", err);
+    process.exit(1);
+  }
+}
+
+seed();
