@@ -1,0 +1,7 @@
+---
+# cPanel Git Version Control: after "Update from Remote" -> "Deploy HEAD Commit",
+# restart the Node.js app (Passenger) so the new code is used.
+deployment:
+  tasks:
+    - /bin/mkdir -p tmp
+    - /bin/touch tmp/restart.txt

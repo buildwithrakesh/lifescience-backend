@@ -30,6 +30,10 @@ connectDB();
 
 const app = express();
 
+// Behind a proxy (Render / cPanel LiteSpeed+Passenger): use the real visitor IP from X-Forwarded-For,
+// so the login rate limit counts per visitor instead of treating every visitor as one IP.
+app.set("trust proxy", 1);
+
 // Security HTTP headers
 app.use(
   helmet({
