@@ -61,6 +61,9 @@ app.use(
       }
     },
     credentials: true,
+    // Speed: let browsers cache the CORS preflight (OPTIONS) result instead of repeating it before
+    // every admin / POST request (browsers cap this, e.g. Chrome at 2 hours).
+    maxAge: 86400,
   })
 );
 
