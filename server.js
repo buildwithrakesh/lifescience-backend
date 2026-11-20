@@ -47,6 +47,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "https://vetora-health.web.app",
   "https://vetora-health.firebaseapp.com",
+  "https://lifesciencepharmaceutical.in",
+  "https://www.lifesciencepharmaceutical.in",
 ];
 
 app.use(
